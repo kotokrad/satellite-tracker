@@ -1,0 +1,17 @@
+/* CSS declarations go here */
+html {
+  height: 100%;
+}
+
+body {
+  height: 100%;
+  margin: 0;
+}
+
+#render-target {
+  height: 100%;
+}
+
+.map-container {
+  height: 100%;
+}
