@@ -12,7 +12,6 @@ export const TLE = [
   '1 33591U 09005A   17027.91057759 +.00000097 +00000-0 +77621-4 0  9998',
   '2 33591 099.0737 352.8899 0013289 309.7801 050.2199 14.12148166410592'
 ];
-// const DEFAULT_SAT = 'noaa-19';
 
 if (Meteor.isServer) {
   Meteor.publish('tracks.points', function(date) {
@@ -22,9 +21,20 @@ if (Meteor.isServer) {
       satellite: { $in: satelliteList },
       timestamp: { $gte: date - 1530 }
     }, {
-      limit: 6120, // TODO: declare const
+      limit: 6120, // TODO: use settings variable
     });
   });
+
+  Meteor.publish('tracks.firstPoint', function(date) {
+    console.log('publish first point');
+    const satelliteList = ['noaa-19']; // TODO: get list from user's data
+    const satellite = satelliteList[0];
+    return Tracks.find({
+      satellite: { $eq: satellite },
+      timestamp: { $eq: date }
+    });
+  });
+
   // TODO: publish encoded polyline
   Meteor.publish('tracks.path', function(date) {
     // console.log('publish polyline');
