@@ -5,13 +5,9 @@ import moment from 'moment';
 
 import { getPosition, toShortDate } from './satelliteUtils';
 
-export const Tracks = new Mongo.Collection('tracks');
+import { Elements } from './elements.js';
 
-// export const TRACK_COUNT = 6120;
-export const TLE = [
-  '1 33591U 09005A   17027.91057759 +.00000097 +00000-0 +77621-4 0  9998',
-  '2 33591 099.0737 352.8899 0013289 309.7801 050.2199 14.12148166410592'
-];
+export const Tracks = new Mongo.Collection('tracks');
 
 if (Meteor.isServer) {
   Meteor.publish('tracks.points', function(date) {
@@ -51,10 +47,13 @@ if (Meteor.isServer) {
 
 Meteor.methods({
   'tracks.generate'(satellite) {
-    console.time('tracks.generate');
+    console.time(`[${satellite}] tracks.generate`);
     check(satellite, String);
-
+    this.unblock();
     let trackDate;
+    const elements = Elements.findOne({
+      satellite: { $eq: satellite }
+    });
     const lastPoint = Tracks.findOne({
       satellite: { $eq: satellite },
     }, {
@@ -67,9 +66,9 @@ Meteor.methods({
       trackDate = toShortDate(moment(new Date()).subtract(1, 'h'));
     }
     const endDate = toShortDate(moment(new Date()).add(3, 'h'));
-    console.log(`generating ${endDate - trackDate} points`);
+    console.log(`[${satellite}] generating ${endDate - trackDate} points`);
     while (trackDate < endDate) {
-      const position = getPosition(TLE, trackDate);
+      const position = getPosition(elements.lines, trackDate);
       const { lat, lng, height, timestamp } = position;
       Tracks.insert({
         satellite,
@@ -81,7 +80,7 @@ Meteor.methods({
       trackDate += 1;
     }
 
-    console.timeEnd('tracks.generate');
+    console.timeEnd(`[${satellite}] tracks.generate`);
   },
   'tracks.cleanup'() {
     console.time('tracks.cleanup');
