@@ -67,19 +67,28 @@ Meteor.methods({
     }
     const endDate = toShortDate(moment(new Date()).add(3, 'h'));
     console.log(`[${satellite}] generating ${endDate - trackDate} points`);
+    let bulk = Tracks.rawCollection().initializeUnorderedBulkOp();
+    let counter = 0;
     while (trackDate < endDate) {
       const position = getPosition(elements.lines, trackDate);
       const { lat, lng, height, timestamp } = position;
-      Tracks.insert({
+      bulk.insert({
         satellite,
         lat,
         lng,
         height,
         timestamp,
       });
+      counter += 1;
+      if (!(counter % 1000)) {
+        bulk.execute();
+        bulk = Tracks.rawCollection().initializeUnorderedBulkOp();
+      }
       trackDate += 1;
     }
-
+    if (counter % 1000) {
+      bulk.execute();
+    }
     console.timeEnd(`[${satellite}] tracks.generate`);
   },
   'tracks.cleanup'() {
